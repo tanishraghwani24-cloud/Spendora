@@ -7,13 +7,7 @@ import {
   Smartphone
 } from "lucide-react";
 
-export type Bank =
-  | "HDFC Bank"
-  | "SBI Card"
-  | "Axis Bank"
-  | "ICICI Bank"
-  | "IDFC FIRST"
-  | "Unknown Bank";
+export type Bank = string;
 
 export type Card = {
   bank: Bank;
