@@ -1,0 +1,108 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --app-bg: #f8fafc;
+  --app-text: #0f172a;
+  --app-card: #ffffff;
+  --app-border: #dbe4ee;
+  --app-muted: #475569;
+}
+
+html.dark {
+  color-scheme: dark;
+  --app-bg: #0f172a;
+  --app-text: #ffffff;
+  --app-card: #1e293b;
+  --app-border: #334155;
+  --app-muted: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: "Inter", sans-serif;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.panel {
+  @apply rounded-3xl shadow-card backdrop-blur transition-colors duration-200;
+  border: 1px solid var(--app-border);
+  background-color: color-mix(in srgb, var(--app-card) 90%, transparent);
+}
+
+.section-title {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+  color: var(--app-text);
+}
+
+.section-copy {
+  @apply text-sm leading-6 sm:text-base;
+  color: var(--app-muted);
+}
+
+/* Keep common utility-based surfaces in sync with global theme tokens. */
+.bg-white,
+.bg-white\/90,
+.bg-white\/80 {
+  background-color: color-mix(in srgb, var(--app-card) 90%, transparent);
+}
+
+.bg-white {
+  background-color: var(--app-card);
+}
+
+.border-slate-200,
+.border-gray-100,
+.border-white\/70 {
+  border-color: var(--app-border);
+}
+
+.text-slate-900,
+.text-slate-800,
+.text-brand-ink {
+  color: var(--app-text);
+}
+
+.text-slate-700,
+.text-slate-600,
+.text-gray-700,
+.text-gray-600,
+.text-gray-500 {
+  color: var(--app-muted);
+}
+
+.bg-slate-50,
+.bg-gray-50,
+.bg-gray-100 {
+  background-color: color-mix(in srgb, var(--app-card) 88%, var(--app-bg));
+}
