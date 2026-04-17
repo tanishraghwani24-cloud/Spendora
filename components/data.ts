@@ -7,6 +7,27 @@ import {
   Smartphone
 } from "lucide-react";
 
+export type Bank =
+  | "HDFC Bank"
+  | "SBI Card"
+  | "Axis Bank"
+  | "ICICI Bank"
+  | "IDFC FIRST"
+  | "Unknown Bank";
+
+export type Card = {
+  bank: Bank;
+  card: string;
+  badge?: string;
+  savings: string;
+  description: string;
+  benefits: readonly string[];
+  annualFee: string;
+  joiningFee: string;
+  waiver: string;
+  tradeoff: string;
+};
+
 export const categories = [
   {
     label: "Movies",
@@ -111,7 +132,7 @@ export const recommendationCards = [
     waiver: "Spend-based waiver",
     tradeoff: "Reward rates may feel moderate compared with highly targeted cashback cards."
   }
-] as const;
+] as const satisfies readonly Card[];
 
 export const compareRows = [
   { label: "Annual savings", left: "\u20b98,693", right: "\u20b97,940", better: "left" },
@@ -123,4 +144,3 @@ export const compareRows = [
   { label: "Best for", left: "Shopping + entertainment", right: "Simple online cashback", better: "tie" }
 ] as const;
 
-export type Card = (typeof recommendationCards)[number];
