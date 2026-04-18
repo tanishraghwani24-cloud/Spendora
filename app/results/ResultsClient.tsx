@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { getRecommendations, Recommendation } from "@/lib/scoringEngine";
 import AnimatedCard from "../../components/AnimatedCard";
@@ -13,6 +13,19 @@ type ResultsClientProps = {
   foodSpending: number;
   travelSpending: number;
   shoppingSpending: number;
+};
+
+type BreakdownItem = {
+  category?: string;
+  categoryName?: string;
+  amountSpent?: number;
+  monthlySpend?: number;
+  spend?: number;
+  rewardRate?: number;
+  rate?: number;
+  savings?: number;
+  savingsCalculated?: number;
+  annualSavings?: number;
 };
 
 function normalizeCategory(value: string): string {
@@ -69,6 +82,8 @@ export default function ResultsClient({
   travelSpending,
   shoppingSpending,
 }: ResultsClientProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   const userInput = useMemo(() => {
     const primaryCategory = `cat_${normalizeCategory(primaryParam || "shopping")}`;
 
@@ -93,6 +108,59 @@ export default function ResultsClient({
   const results: Recommendation[] = useMemo(() => {
     return getRecommendations(userInput, rawData);
   }, [userInput]);
+
+  const breakdownItems = useMemo(() => {
+    const topResult = (results[0] ?? null) as
+      | (Recommendation & {
+          breakdown?: BreakdownItem[];
+          card?: { breakdown?: BreakdownItem[] };
+        })
+      | null;
+
+    const candidate = topResult?.breakdown ?? topResult?.card?.breakdown;
+    return Array.isArray(candidate) ? candidate : [];
+  }, [results]);
+
+  const formatCurrency = (value: number) =>
+    `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+      Math.max(0, Math.round(value))
+    )}`;
+
+  const toTitleCase = (value: string) =>
+    value
+      .replace(/^cat_/, "")
+      .replace(/[_-]+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const parsedBreakdown = useMemo(() => {
+    return breakdownItems
+      .map((item) => {
+        const rawCategory =
+          typeof item.categoryName === "string"
+            ? item.categoryName
+            : typeof item.category === "string"
+              ? item.category
+              : "Other";
+
+        const amount = Number(item.amountSpent ?? item.monthlySpend ?? item.spend ?? 0);
+        const rewardRate = Number(item.rewardRate ?? item.rate ?? 0);
+        const computedSavings = Number(item.savings ?? item.savingsCalculated ?? item.annualSavings ?? 0);
+
+        return {
+          category: toTitleCase(rawCategory),
+          amount: Number.isFinite(amount) ? amount : 0,
+          rewardRate: Number.isFinite(rewardRate) ? rewardRate : 0,
+          savings: Number.isFinite(computedSavings) ? computedSavings : 0,
+        };
+      })
+      .filter((item) => item.category.length > 0);
+  }, [breakdownItems]);
+
+  const totalSavings = useMemo(
+    () => parsedBreakdown.reduce((sum, item) => sum + item.savings, 0),
+    [parsedBreakdown]
+  );
 
   return (
     <div className="container-shell relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-blue-50 py-12 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 sm:py-16">
@@ -222,14 +290,52 @@ export default function ResultsClient({
           )}
         </section>
 
-        <section
-          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-600 dark:bg-slate-800"
-        >
-          <div className="flex items-center justify-between">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-600 dark:bg-slate-800">
+          <button
+            type="button"
+            onClick={() => setShowDetails((previous) => !previous)}
+            className="flex w-full items-center justify-between text-left"
+          >
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Calculation details
             </h2>
-            <ChevronDown className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+            <ChevronDown
+              className={`h-5 w-5 text-slate-500 transition-transform duration-300 dark:text-slate-300 ${
+                showDetails ? "rotate-180" : "rotate-0"
+              }`}
+            />
+          </button>
+
+          <div
+            className={`grid transition-all duration-300 ease-out ${
+              showDetails ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="rounded-xl border border-white/50 bg-white/60 p-4 backdrop-blur-sm dark:border-slate-500/30 dark:bg-slate-900/40">
+                {parsedBreakdown.length > 0 ? (
+                  <div className="space-y-2">
+                    {parsedBreakdown.map((item, index) => (
+                      <p
+                        key={`${item.category}-${index}`}
+                        className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800/70 dark:text-slate-200"
+                      >
+                        {`${item.category}: ${formatCurrency(item.amount)} × ${item.rewardRate}% = ${formatCurrency(
+                          item.savings
+                        )}`}
+                      </p>
+                    ))}
+                    <p className="pt-2 text-sm font-semibold text-green-700 dark:text-green-300">
+                      {`Total Savings: ${formatCurrency(totalSavings)}`}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Detailed breakdown is not available for this recommendation.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </div>
