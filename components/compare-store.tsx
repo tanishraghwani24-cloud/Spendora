@@ -36,7 +36,7 @@ function normalizeCard(card: Card | Record<string, unknown>): Card {
   const annualFee = source.annual_fee;
 
   return {
-    bank: typeof source.bank === "string" ? source.bank : "Unknown Bank",
+    bank: (typeof source.bank === "string" ? source.bank : "Unknown Bank") as string,
     card: typeof source.card_name === "string" ? source.card_name : "Unknown Card",
     savings: typeof source.displaySavings === "string" ? source.displaySavings : "Not available",
     description: "",
