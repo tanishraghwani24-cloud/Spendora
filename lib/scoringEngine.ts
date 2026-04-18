@@ -7,6 +7,15 @@ export type Recommendation = {
   displaySavings: string;
   whyRecommended: string;
   tradeoff: string;
+  breakdown: SavingsBreakdownItem[];
+  totalCategorySavings: number;
+};
+
+export type SavingsBreakdownItem = {
+  category: string;
+  spend: number;
+  rewardRate: number;
+  savings: number;
 };
 
 function unwrapData(raw: any) {
@@ -29,6 +38,7 @@ export function getRecommendations(
     ? userInput.secondaryCategories.map((c: string) => normalizeCategory(c)).filter(Boolean)
     : [];
   const spending = userInput?.spending ?? {};
+  const selectedCategories = Array.from(new Set([primary, ...secondary].filter(Boolean)));
 
   const secondarySet = new Set(secondary);
   const annualSpendingCache = new Map<string, number>();
@@ -58,6 +68,32 @@ export function getRecommendations(
     let matched = false;
 
     const rewards = Array.isArray(card?.category_rewards) ? card.category_rewards : [];
+    const breakdown: SavingsBreakdownItem[] = [];
+
+    for (const normalizedCategoryId of selectedCategories) {
+      const categoryKey = normalizedCategoryId.replace(/^cat_/, "");
+      const spend = Number(spending?.[categoryKey] ?? 0);
+      const safeSpend = Number.isFinite(spend) ? spend : 0;
+
+      const rewardEntry = rewards.find((item: any) => {
+        const rewardId = ((item?.category_id ?? item?.category ?? "") as string).toLowerCase();
+        return normalizeCategory(rewardId) === normalizedCategoryId;
+      });
+
+      const rewardRatePercent = Number(rewardEntry?.reward_rate ?? 0);
+      const safeRewardRatePercent =
+        Number.isFinite(rewardRatePercent) && rewardRatePercent > 0 ? rewardRatePercent : 0;
+      const rewardRate = safeRewardRatePercent / 100;
+
+      breakdown.push({
+        category: categoryKey,
+        spend: safeSpend,
+        rewardRate,
+        savings: safeSpend * rewardRate,
+      });
+    }
+
+    const totalCategorySavings = breakdown.reduce((sum, item) => sum + item.savings, 0);
 
     for (const r of rewards) {
       if (!r) {
@@ -105,6 +141,8 @@ export function getRecommendations(
       displaySavings: `₹${Math.max(0, Math.round(net))}`,
       whyRecommended: why.join(", "),
       tradeoff: annualFee > 0 ? `Annual fee: ₹${annualFee}` : "No annual fee",
+      breakdown,
+      totalCategorySavings,
     });
   }
 
